@@ -1,0 +1,209 @@
+===============================================================================
+ MatchIQ - quick reference
+ Football match prediction for Europe's big five leagues
+ Project: C:\Users\notavail_\Projects\pitch-predict
+===============================================================================
+
+-------------------------------------------------------------------------------
+ 1. LAUNCH IT
+-------------------------------------------------------------------------------
+Two terminals, both from the project root.
+
+  Terminal 1 - backend (takes ~6s to load the model):
+
+      .venv/Scripts/python.exe -m uvicorn backend.main:app --port 8000
+
+  Terminal 2 - frontend:
+
+      npm run dev --prefix frontend
+
+  Then open:  http://localhost:5173
+
+Vite proxies /api to the backend, so you only ever visit that one URL.
+
+TWO GOTCHAS
+  * Use "localhost", NOT "127.0.0.1", for the UI. Vite binds to IPv6 here, so
+    http://127.0.0.1:5173 will not connect. The backend answers on both.
+  * Keep the ports at 8000 and 5173 unless you change them together. The Vite
+    proxy (frontend/vite.config.js) targets 127.0.0.1:8000, and the backend's
+    CORS allowlist (backend/main.py) expects the UI on 5173.
+
+-------------------------------------------------------------------------------
+ 2. FIRST TIME ON A FRESH MACHINE
+-------------------------------------------------------------------------------
+Already done on this machine - only needed after a clone.
+
+      python -m venv .venv
+      .venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+      npm install --prefix frontend
+
+Download the dataset (it is gitignored - too big for the repo):
+
+      curl -L -o model/data/raw.zip "https://www.kaggle.com/api/v1/datasets/download/adamgbor/club-football-match-data-2000-2025"
+      unzip -o model/data/raw.zip -d model/data
+      rm model/data/raw.zip
+
+Then train:
+
+      .venv/Scripts/python.exe model/train.py
+
+Training takes ~50s and writes model.pkl, state.pkl, metrics.json and
+data/backtest.csv.
+
+-------------------------------------------------------------------------------
+ 3. KEEPING FIXTURES CURRENT
+-------------------------------------------------------------------------------
+The fixture list only covers the coming week. Re-run this whenever you want
+fresh matches - it also pulls in results played since, so form, Elo and league
+tables all update:
+
+      .venv/Scripts/python.exe model/refresh.py
+
+Then RESTART THE BACKEND to pick it up.
+
+Safe to run as often as you like: it rebuilds from the pristine training state
+each time rather than stacking changes, so it never double-counts.
+
+It pulls from three free feeds, no API keys needed:
+  * football-data.co.uk/mmz4281/...   recent results
+  * api.clubelo.com                   current Elo ratings
+  * football-data.co.uk/fixtures.csv  upcoming fixtures
+
+-------------------------------------------------------------------------------
+ 4. THE PAGES
+-------------------------------------------------------------------------------
+  Fixtures        (landing page) This week's big-five matches, each with the
+                  model's call, both sides' last-5 form, Elo and a trust score.
+                  CLICK ANY ROW for the full breakdown.
+  Custom matchup  Predict any two teams that aren't scheduled - including
+                  across leagues (Arsenal v Bayern works; Elo is calibrated
+                  across all five).
+  Track record    Past matchdays with the model's out-of-sample call next to
+                  what actually happened.
+  Leagues         All five leagues and their current squads, ranked by Elo.
+  Head to Head    Full meeting record between two clubs, with charts.
+  Model Info      Accuracy, per-league breakdown, confusion matrix, feature
+                  importance, and a plain-English explanation.
+
+-------------------------------------------------------------------------------
+ 5. READING THE PREDICTIONS
+-------------------------------------------------------------------------------
+Model accuracy:             52.2%
+Baseline (always home win): 42.6%
+Edge:                       +9.6 percentage points
+
+Per league (test period, seasons 2023-2025):
+      La Liga          54.1%   (baseline 44.2%)
+      Premier League   53.8%   (baseline 43.4%)
+      Serie A          52.1%   (baseline 40.8%)
+      Ligue 1          50.4%   (baseline 43.0%)
+      Bundesliga       49.8%   (baseline 41.2%)
+
+THREE THINGS TO KEEP IN MIND
+
+  a) READ THE THREE PROBABILITIES, NOT JUST THE PICK.
+     The model almost never names a draw as its top pick, because a draw is
+     rarely the single most likely result - it usually sits at 25-28% while one
+     side leads. The draw probability it reports is still meaningful.
+
+  b) TRUST SCORE IS REAL, NOT DECORATION.
+     Measured on the backtest, accuracy rises with it:
+         1/10 -> 34.5%    4/10 -> 46.3%    7/10 -> 59.4%    10/10 -> 75.8%
+     Low-trust rows are genuinely hard calls, not broken ones.
+
+  c) IT IS EARLY SEASON RIGHT NOW (matchday 2-3).
+     Form and league-position features are nearly empty, so the model leans
+     almost entirely on Elo and most trust scores sit at 2-5/10. Real accuracy
+     early in a campaign is lower than the 52% headline.
+
+  Also: clubs with NO top-flight history can't be predicted at all (e.g.
+  Elversberg, just promoted to the Bundesliga). Those rows say "No prediction"
+  rather than guessing. Clubs that have been up before (Leeds, Hull, Coventry)
+  keep their history and predict normally.
+
+-------------------------------------------------------------------------------
+ 6. USING IT WITHOUT THE UI
+-------------------------------------------------------------------------------
+Interactive API docs:  http://localhost:8000/docs
+
+      curl "http://localhost:8000/api/fixtures?league=E0"
+      curl "http://localhost:8000/api/predict?home=Arsenal&away=Chelsea"
+
+League codes: E0 Premier League, SP1 La Liga, D1 Bundesliga,
+              I1 Serie A, F1 Ligue 1
+
+Endpoints:
+      GET /api/health                       service + model status
+      GET /api/freshness                    how current the data is
+      GET /api/leagues                      the five leagues
+      GET /api/teams?league=E0              current squads, strongest first
+      GET /api/predict?home=X&away=Y        full prediction
+      GET /api/fixtures?league=E0           upcoming fixtures + predictions
+      GET /api/fixtures/dates               dates with fixtures
+      GET /api/team/{name}/form             form, season stats, history
+      GET /api/head-to-head?team1=X&team2=Y H2H record
+      GET /api/matches?date=2025-05-25      past matchday: prediction vs result
+      GET /api/model/accuracy               full metrics
+
+Team names are matched loosely - case, accents and punctuation are ignored, so
+"man utd" and "Real Madrid " both resolve. A wrong name returns a 404 WITH
+SPELLING SUGGESTIONS ("Barcelonaa" suggests "Barcelona").
+
+-------------------------------------------------------------------------------
+ 7. TROUBLESHOOTING
+-------------------------------------------------------------------------------
+UI loads but everything errors
+      The backend isn't running, or isn't on port 8000. Check
+      http://localhost:8000/api/health
+
+"Model is not loaded" / 503
+      Run: .venv/Scripts/python.exe model/train.py     then restart the backend.
+
+Fixtures list is empty
+      Run: .venv/Scripts/python.exe model/refresh.py   then restart the backend.
+
+Form looks 15 months out of date
+      Same - run refresh.py and restart. The Fixtures page shows a banner at
+      the top telling you exactly how current the data is.
+
+Port already in use
+      Something's still running from a previous session. Find and stop it:
+          netstat -ano | findstr ":8000"
+          taskkill /PID <pid> /F
+
+-------------------------------------------------------------------------------
+ 8. LAYOUT
+-------------------------------------------------------------------------------
+  model/
+      features.py     feature engineering - THE important file. Builds all 33
+                      features in a single leak-free pass over history.
+      train.py        training + evaluation, time-based split
+      predict.py      prediction, team/H2H lookups, fixtures
+      refresh.py      pulls recent results, live Elo, upcoming fixtures
+      explore.py      dataset exploration + data-leakage checks
+      model.pkl       the trained forest
+      state.pkl       team state from training - READ ONLY, never edit
+      state_live.pkl  refreshed state, written by refresh.py
+  backend/
+      main.py         FastAPI app, CORS, error handling
+      routes/         predictions.py, stats.py
+  frontend/src/
+      pages/          FixturesPage (/), MatchPage, CustomMatchPage, ...
+      components/     PredictionDetail, TeamCard, Sidebar, ui primitives
+      theme.js        chart palette - mirrors the CSS tokens
+      styles.css      the design system
+
+WHAT IS GITIGNORED (all reproducible, none of it authored by hand):
+      .venv/  node_modules/  frontend/dist/
+      model/data/*.csv       the Kaggle dataset + generated backtest
+      model/data/live/       refresh.py downloads
+      model/*.pkl            trained forest + team state
+      model/metrics.json     evaluation results
+Committing the repo is ~0.27 MB. Without .gitignore it would be ~432 MB.
+
+Full detail is in README.md.
+
+===============================================================================
+ MatchIQ estimates probabilities from historical form. Football is genuinely
+ unpredictable - these are not certainties. Not betting advice.
+===============================================================================

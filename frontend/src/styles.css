@@ -1,0 +1,498 @@
+/* ==========================================================================
+   MatchIQ design system — black
+   Near-black neutrals, white as the accent, and colour reserved strictly for
+   data meaning (win/draw/loss, probability heat). Every number is mono.
+   ========================================================================== */
+
+:root {
+  /* Backgrounds: near-black neutrals with real elevation steps */
+  --bg: #08090a;
+  --bg-deep: #050506;
+  --bg-raised: #121315;
+
+  /* Surfaces */
+  --card: rgba(22, 23, 26, 0.72);
+  --card-solid: #16171a;
+  --card-hover: rgba(34, 36, 41, 0.85);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Accent is white — actions, active states, focus */
+  --accent: #ffffff;
+  --accent-dim: #d4d4d8;
+  --accent-deep: #a1a1aa;
+  --accent-soft: rgba(255, 255, 255, 0.09);
+  --accent-softer: rgba(255, 255, 255, 0.05);
+
+  /* Semantic — used ONLY where colour carries data meaning */
+  --pos: #3fb950;
+  --pos-deep: #1f6f2e;
+  --warn: #d29922;
+  --warn-deep: #8a6212;
+  --neg: #f85149;
+  --neg-deep: #93231d;
+
+  /* Probability cell tints */
+  --tint-high: rgba(63, 185, 80, 0.15);
+  --tint-mid: rgba(210, 153, 34, 0.12);
+  --tint-low: rgba(248, 81, 73, 0.10);
+
+  /* Text */
+  --text: #f4f4f5;
+  --text-dim: rgba(244, 244, 245, 0.56);
+  --text-faint: rgba(244, 244, 245, 0.34);
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 232px;
+
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  /* A whisper of light from the top-left so the black has depth rather than
+     reading as a flat void. */
+  background:
+    radial-gradient(1100px 560px at 12% -12%, rgba(255, 255, 255, 0.045), transparent 62%),
+    radial-gradient(900px 480px at 100% 0%, rgba(255, 255, 255, 0.025), transparent 58%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Every number in the app is mono — it should read like a data terminal. */
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+a { color: inherit; text-decoration: none; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.11); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+::selection { background: rgba(255, 255, 255, 0.18); }
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+.app { display: flex; min-height: 100%; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  background: linear-gradient(180deg, rgba(14, 15, 17, 0.96), rgba(6, 7, 8, 0.96));
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 10px 20px;
+}
+.brand-mark {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: linear-gradient(140deg, #ffffff, #9a9aa2);
+  display: grid; place-items: center;
+  font-size: 17px;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.14);
+}
+.brand-name { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+.brand-sub {
+  font-family: var(--mono); font-size: 9.5px; color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: 0.14em; margin-top: -2px;
+}
+
+.nav-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--text-faint); padding: 14px 12px 6px; font-weight: 600;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px; border-radius: var(--radius-sm);
+  color: var(--text-dim); font-weight: 500; font-size: 13.5px;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--accent-softer); color: var(--text); }
+.nav-item.active {
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.nav-item.active .nav-icon { color: var(--accent); }
+.nav-icon { width: 17px; height: 17px; flex: 0 0 17px; color: var(--text-faint); }
+
+.sidebar-foot {
+  margin-top: auto; padding: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-faint);
+}
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: blur(14px);
+  background: rgba(8, 9, 10, 0.82);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.topbar h1 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.topbar-sub { font-size: 12px; color: var(--text-dim); }
+
+/* "Live" keeps a green dot: here the colour means status, not decoration. */
+.live-dot {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+  color: var(--text-dim); text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--accent-softer);
+}
+.live-dot::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--pos); box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.7);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.6); }
+  70%  { box-shadow: 0 0 0 7px rgba(63, 185, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0); }
+}
+
+.content { padding: 22px 24px 60px; max-width: 1420px; width: 100%; }
+
+/* ==========================================================================
+   Primitives
+   ========================================================================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.card.tight { padding: 14px; }
+
+.section-head {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--text-faint); font-weight: 600; margin: 0 0 12px;
+}
+
+.grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.spacer { flex: 1; }
+
+.label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--text-faint); font-weight: 600;
+}
+
+.stat-value { font-family: var(--mono); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.stat-value.green { color: var(--text); }
+.stat-sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+
+.team-name { font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em; }
+
+/* Controls -------------------------------------------------------------- */
+select, input[type="text"] {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--sans); font-size: 13.5px;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+select:focus, input:focus { outline: none; border-color: var(--border-strong); }
+select option { background: var(--card-solid); color: var(--text); }
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.select-wrap { position: relative; }
+.select-wrap::after {
+  content: ''; position: absolute; right: 13px; top: 50%;
+  width: 6px; height: 6px; margin-top: -4px;
+  border-right: 1.5px solid var(--text-faint);
+  border-bottom: 1.5px solid var(--text-faint);
+  transform: rotate(45deg); pointer-events: none;
+}
+
+/* Primary action is white on black — the strongest contrast available. */
+.btn {
+  background: var(--accent);
+  color: #0a0a0b; border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 11px 22px; font-family: var(--sans); font-weight: 600; font-size: 13.5px;
+  cursor: pointer; letter-spacing: 0.01em;
+  transition: background 0.15s, transform 0.08s, box-shadow 0.15s;
+  box-shadow: 0 1px 14px rgba(255, 255, 255, 0.1);
+}
+.btn:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent-dim); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.32; cursor: not-allowed; box-shadow: none; }
+.btn.ghost {
+  background: transparent; border: 1px solid var(--border-strong);
+  color: var(--text); box-shadow: none; font-weight: 500;
+}
+.btn.ghost:hover { background: var(--accent-soft); border-color: var(--border-strong); }
+.btn.sm { padding: 7px 14px; font-size: 12px; }
+
+/* Pills ----------------------------------------------------------------- */
+.pills { display: flex; gap: 7px; flex-wrap: wrap; }
+.pill {
+  font-family: var(--mono); font-size: 11.5px;
+  padding: 6px 13px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--accent-softer);
+  color: var(--text-dim); cursor: pointer; white-space: nowrap;
+  transition: all 0.15s;
+}
+.pill:hover { border-color: var(--border-strong); color: var(--text); }
+.pill.active {
+  background: var(--accent); border-color: var(--accent);
+  color: #0a0a0b; font-weight: 500;
+}
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; font-family: var(--sans);
+}
+.tab:hover { color: var(--text); border-color: var(--border-strong); }
+.tab.active {
+  background: var(--accent-soft); border-color: var(--border-strong); color: var(--text);
+}
+
+/* Badges ---------------------------------------------------------------- */
+.badge {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 3px 9px; border-radius: 6px;
+  border: 1px solid var(--border); color: var(--text-dim);
+  white-space: nowrap;
+}
+/* .green here means "the model's pick" — a neutral emphasis, not a colour claim */
+.badge.green {
+  background: var(--accent-soft); border-color: var(--border-strong); color: var(--text);
+}
+.badge.amber { background: rgba(210, 153, 34, 0.13); border-color: rgba(210, 153, 34, 0.3); color: var(--warn); }
+.badge.red   { background: rgba(248, 81, 73, 0.12); border-color: rgba(248, 81, 73, 0.3); color: var(--neg); }
+
+/* W/D/L form circles — colour genuinely encodes the result here */
+.form-badges { display: flex; gap: 5px; }
+.form-badge {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  border: 1px solid transparent;
+}
+.form-badge.W { background: rgba(63, 185, 80, 0.18); color: var(--pos); border-color: rgba(63, 185, 80, 0.38); }
+.form-badge.D { background: rgba(210, 153, 34, 0.15); color: var(--warn); border-color: rgba(210, 153, 34, 0.32); }
+.form-badge.L { background: rgba(248, 81, 73, 0.14); color: var(--neg); border-color: rgba(248, 81, 73, 0.3); }
+.form-badge.empty { background: rgba(255, 255, 255, 0.03); color: var(--text-faint); border-color: var(--border); }
+
+/* Trust score — a scale, so it keeps its red/amber/green ramp */
+.trust {
+  display: inline-flex; align-items: baseline; gap: 1px;
+  font-family: var(--mono); font-weight: 700; font-size: 13px;
+  padding: 4px 10px; border-radius: 7px;
+  background: rgba(63, 185, 80, 0.14); border: 1px solid rgba(63, 185, 80, 0.32);
+  color: var(--pos);
+}
+.trust.mid { background: rgba(210, 153, 34, 0.13); border-color: rgba(210, 153, 34, 0.3); color: var(--warn); }
+.trust.low { background: rgba(248, 81, 73, 0.11); border-color: rgba(248, 81, 73, 0.28); color: var(--neg); }
+.trust small { font-size: 10px; opacity: 0.65; font-weight: 500; }
+
+/* ==========================================================================
+   Probability bars
+   ========================================================================== */
+.prob-row { display: grid; grid-template-columns: 92px 1fr 62px; align-items: center; gap: 12px; margin-bottom: 10px; }
+.prob-name { font-size: 12.5px; color: var(--text-dim); font-weight: 500; }
+.prob-name.win { color: var(--text); font-weight: 600; }
+.prob-track {
+  height: 10px; border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.prob-fill {
+  height: 100%; border-radius: 999px;
+  /* Animate from 0 to the real value when a prediction loads */
+  transition: width 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.prob-fill.home { background: linear-gradient(90deg, var(--pos-deep), var(--pos)); }
+.prob-fill.draw { background: linear-gradient(90deg, var(--warn-deep), var(--warn)); }
+.prob-fill.away { background: linear-gradient(90deg, var(--neg-deep), var(--neg)); }
+.prob-pct { font-family: var(--mono); font-size: 14px; font-weight: 700; text-align: right; }
+
+/* ==========================================================================
+   Match table
+   ========================================================================== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table.matches { width: 100%; border-collapse: collapse; min-width: 880px; background: var(--card); }
+table.matches th {
+  text-align: left; padding: 11px 14px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.13em;
+  color: var(--text-faint); font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  background: rgba(5, 6, 7, 0.7);
+  position: sticky; top: 0;
+}
+table.matches td { padding: 11px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); vertical-align: middle; }
+table.matches tbody tr { transition: background 0.14s; }
+table.matches tbody tr:hover { background: var(--card-hover); }
+table.matches tbody tr:last-child td { border-bottom: none; }
+table.matches tbody tr.clickable { cursor: pointer; }
+
+.fixture { display: flex; align-items: center; gap: 9px; }
+.fixture .vs { font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); }
+.score-chip {
+  font-family: var(--mono); font-weight: 700; font-size: 12.5px;
+  padding: 3px 9px; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+}
+
+/* Probability cells tinted by value */
+.pcell {
+  font-family: var(--mono); font-size: 12.5px; font-weight: 500;
+  text-align: center; padding: 5px 8px; border-radius: 6px;
+  border: 1px solid transparent; min-width: 54px; display: inline-block;
+}
+.pcell.high { background: var(--tint-high); color: var(--pos); border-color: rgba(63, 185, 80, 0.28); font-weight: 700; }
+.pcell.mid  { background: var(--tint-mid); color: var(--warn); border-color: rgba(210, 153, 34, 0.22); }
+.pcell.low  { background: var(--tint-low); color: rgba(248, 81, 73, 0.82); border-color: rgba(248, 81, 73, 0.18); }
+
+/* Row fade-in */
+.fade-row { animation: fadeUp 0.4s ease both; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   States
+   ========================================================================== */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+.empty-state, .error-state {
+  text-align: center; padding: 44px 20px; color: var(--text-dim);
+}
+.error-state .msg { color: var(--neg); margin-bottom: 14px; font-size: 13.5px; }
+.empty-state .big { font-size: 30px; margin-bottom: 10px; opacity: 0.45; }
+
+.spinner {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent);
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.footer {
+  margin-top: 36px; padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px; color: var(--text-faint); line-height: 1.7;
+}
+.footer a { color: var(--text-dim); border-bottom: 1px solid var(--border); }
+.footer a:hover { color: var(--text); }
+
+.note {
+  font-size: 12px; color: var(--text-dim);
+  background: var(--accent-softer);
+  border: 1px solid var(--border); border-left: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 10px 13px;
+}
+.note code {
+  font-family: var(--mono); font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.07); padding: 1px 5px; border-radius: 4px;
+  color: var(--text);
+}
+
+/* ==========================================================================
+   Feature importance bars ("why this prediction")
+   ========================================================================== */
+.feat-row { display: grid; grid-template-columns: 1fr 80px; gap: 10px; align-items: center; margin-bottom: 9px; }
+.feat-label { font-size: 12px; color: var(--text-dim); }
+.feat-bar-track { height: 5px; background: rgba(255,255,255,0.06); border-radius: 999px; margin-top: 5px; overflow: hidden; }
+.feat-bar {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+  transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.feat-value { font-family: var(--mono); font-size: 12.5px; text-align: right; color: var(--text); font-weight: 600; }
+
+/* ==========================================================================
+   Confusion matrix
+   ========================================================================== */
+table.cm { border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+table.cm th, table.cm td { padding: 9px 13px; text-align: center; border: 1px solid var(--border); }
+table.cm th { color: var(--text-faint); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--sans); font-weight: 600; }
+table.cm td.diag { background: rgba(63, 185, 80, 0.16); color: var(--pos); font-weight: 700; }
+
+/* ==========================================================================
+   Responsive: sidebar becomes a bottom tab bar
+   ========================================================================== */
+@media (max-width: 860px) {
+  .app { flex-direction: column; }
+  .sidebar {
+    position: fixed; bottom: 0; left: 0; right: 0; top: auto;
+    width: 100%; flex: none; height: auto;
+    flex-direction: row; justify-content: space-around;
+    padding: 7px 6px; gap: 2px; z-index: 50;
+    border-right: none; border-top: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+  }
+  .brand, .nav-label, .sidebar-foot { display: none; }
+  .nav-item {
+    flex-direction: column; gap: 4px; padding: 6px 8px;
+    font-size: 10px; text-align: center; flex: 1; min-width: 0;
+  }
+  .nav-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .content { padding: 16px 14px 96px; }
+  .topbar { padding: 12px 14px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1160px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Page-specific responsive tweaks */
+@media (max-width: 900px) {
+  .predict-controls { grid-template-columns: 1fr !important; }
+  .predict-controls > .mono { display: none; }
+  .result-grid { grid-template-columns: 1fr !important; }
+  .verdict { border-left: none !important; padding-left: 0 !important;
+             border-top: 1px solid var(--border); padding-top: 18px !important; }
+}

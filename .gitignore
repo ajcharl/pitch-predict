@@ -1,0 +1,73 @@
+# =============================================================================
+# Python
+# =============================================================================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# =============================================================================
+# Node / frontend
+# =============================================================================
+node_modules/
+dist/
+.vite/
+*.local
+npm-debug.log*
+yarn-error.log*
+
+# =============================================================================
+# Data — downloaded, not authored
+# =============================================================================
+# The Kaggle dataset (~51MB) and everything model/refresh.py pulls from
+# football-data.co.uk and ClubElo. All of it is reproducible:
+#
+#   curl -L -o model/data/raw.zip \
+#     "https://www.kaggle.com/api/v1/datasets/download/adamgbor/club-football-match-data-2000-2025"
+#   unzip -o model/data/raw.zip -d model/data && rm model/data/raw.zip
+#
+# See the README for the full setup steps.
+model/data/*.csv
+model/data/*.zip
+model/data/live/
+
+# Keep the directory itself, so the download above has somewhere to land.
+!model/data/.gitkeep
+
+# =============================================================================
+# Trained artefacts — regenerate with `python model/train.py` (~50s)
+# =============================================================================
+# Deliberately not committed. These are binary blobs that change on every
+# retrain, so committing them would add ~19MB to git history *per retrain*,
+# permanently. They are fully reproducible from the data plus train.py.
+#
+#   model.pkl       the trained forest
+#   state.pkl       team state from training
+#   state_live.pkl  refreshed state, written by refresh.py
+#   metrics.json    evaluation results
+#   backtest.csv    per-match out-of-sample predictions (matched by *.csv above)
+model/*.pkl
+model/metrics.json
+
+# =============================================================================
+# Editors / OS
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =============================================================================
+# Local config & secrets
+# =============================================================================
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
