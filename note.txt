@@ -88,16 +88,16 @@ It pulls from three free feeds, no API keys needed:
 -------------------------------------------------------------------------------
  5. READING THE PREDICTIONS
 -------------------------------------------------------------------------------
-Model accuracy:             52.2%
+Model accuracy:             52.6%
 Baseline (always home win): 42.6%
-Edge:                       +9.6 percentage points
+Edge:                       +10.0 percentage points
 
 Per league (test period, seasons 2023-2025):
-      La Liga          54.1%   (baseline 44.2%)
-      Premier League   53.8%   (baseline 43.4%)
-      Serie A          52.1%   (baseline 40.8%)
-      Ligue 1          50.4%   (baseline 43.0%)
-      Bundesliga       49.8%   (baseline 41.2%)
+      Premier League   54.6%   (baseline 43.4%)
+      La Liga          54.2%   (baseline 44.2%)
+      Serie A          52.5%   (baseline 40.8%)
+      Ligue 1          50.6%   (baseline 43.0%)
+      Bundesliga       50.0%   (baseline 41.2%)
 
 THREE THINGS TO KEEP IN MIND
 
@@ -200,6 +200,48 @@ WHAT IS GITIGNORED (all reproducible, none of it authored by hand):
       model/*.pkl            trained forest + team state
       model/metrics.json     evaluation results
 Committing the repo is ~0.27 MB. Without .gitignore it would be ~432 MB.
+
+-------------------------------------------------------------------------------
+ 9. DEPLOYING (Render + Vercel, free tiers)
+-------------------------------------------------------------------------------
+Config files are in the repo: render.yaml and frontend/vercel.json.
+
+BACKEND - Render
+  New -> Blueprint -> point at the repo. render.yaml sets the build and start
+  commands. Nothing to build: model.pkl, state_live.pkl, metrics.json,
+  backtest.csv and fixtures.csv are all committed (4.8MB total), so there is
+  no dataset download and no training step on the server.
+
+  Measured footprint: ~200MB resident, ~3s model load. Fits the 512MB free
+  instance comfortably.
+
+  --workers 1 is deliberate: each worker loads its own copy of the model.
+
+FRONTEND - Vercel
+  Import the repo, set ROOT DIRECTORY to "frontend". Vite is auto-detected.
+
+  >>> EDIT frontend/vercel.json AND PUT YOUR OWN RENDER URL IN THE REWRITE <<<
+  That is the one value you must change.
+
+  The /api rewrite proxies through Vercel, so the browser sees one origin and
+  CORS never applies. The catch-all rewrite is what stops /match, /leagues and
+  /team/X from 404-ing on a hard refresh or a shared link.
+
+TWO FREE-TIER REALITIES
+  * Cold starts. Render sleeps after ~15 min idle; the next request waits for
+    a container boot + 3s model load. The app handles it: requests retry on
+    gateway errors, and after 4s the fixtures page says the server is waking.
+  * Ephemeral disk. Anything refresh.py writes on the server is wiped on the
+    next deploy. So run refresh LOCALLY and commit the result:
+
+        .venv/Scripts/python.exe model/refresh.py
+        git add -f model/state_live.pkl model/data/live/fixtures.csv model/data/backtest.csv
+        git commit -m "refresh fixtures" && git push
+
+    Pushing redeploys with current data. state.pkl is committed too, so
+    refresh.py works from a fresh clone with no dataset download.
+    Skip it and the app still runs - it falls back to the training snapshot
+    and the freshness banner says so.
 
 Full detail is in README.md.
 

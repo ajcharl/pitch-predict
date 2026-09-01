@@ -34,10 +34,26 @@ export function SkeletonTable({ rows = 8 }) {
   )
 }
 
+/** Shown while a sleeping free-tier backend spins back up. */
+export function WakingNotice() {
+  return (
+    <div className="note" style={{ marginBottom: 16 }}>
+      <strong style={{ color: 'var(--text)' }}>Waking the server up…</strong>{' '}
+      The API sleeps when idle on the free tier, so the first request after a
+      quiet spell can take up to a minute. Later requests are instant.
+    </div>
+  )
+}
+
 export function ErrorState({ error, onRetry }) {
   return (
     <div className="card error-state">
       <div className="msg">{error?.message || 'Something went wrong.'}</div>
+      {error?.coldStart && (
+        <div style={{ marginBottom: 14, fontSize: 12.5 }}>
+          The server may still be waking up — give it a moment and try again.
+        </div>
+      )}
       {error?.suggestions?.length > 0 && (
         <div style={{ marginBottom: 14, fontSize: 12.5 }}>
           Did you mean: <strong>{error.suggestions.join(', ')}</strong>?

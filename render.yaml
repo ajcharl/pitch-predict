@@ -1,0 +1,51 @@
+# Render blueprint for the MatchIQ API.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> point at this repo.
+# Everything the API serves (model.pkl, state_live.pkl, metrics.json,
+# backtest.csv, fixtures.csv) is committed, so there is NO build step beyond
+# installing dependencies and no dataset to download.
+#
+# Measured footprint on this codebase: ~200MB resident, ~3s model load.
+# That fits Render's 512MB free instance with room to spare.
+
+services:
+  - type: web
+    name: matchiq-api
+    runtime: python
+    plan: free
+    region: frankfurt          # pick the region nearest your users
+    branch: main
+
+    buildCommand: pip install -r backend/requirements.txt
+
+    # --workers 1 is deliberate, not a default. Each worker loads its own copy
+    # of the forest and team state (~40MB), so 2 workers would double that for
+    # no benefit here: requests are short and CPU-light. One worker also keeps
+    # the process well inside the 512MB limit.
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1
+
+    healthCheckPath: /api/health
+
+    envVars:
+      # Pin the interpreter. The committed model.pkl is a pickle, so the
+      # serving environment must match what trained it closely enough to
+      # unpickle -- scikit-learn is pinned exactly in requirements.txt for the
+      # same reason.
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+
+      # Only needed if the frontend calls this service directly. With the
+      # Vercel rewrite in frontend/vercel.json the browser never sees this
+      # origin, so CORS does not apply and you can leave these unset.
+      #
+      # - key: ALLOWED_ORIGINS
+      #   value: https://your-app.vercel.app
+      #
+      # Vercel gives every preview deployment its own subdomain; this regex
+      # lets them through without listing each one.
+      # - key: ALLOWED_ORIGIN_REGEX
+      #   value: https://.*\.vercel\.app
+
+      # Keep pip from caching wheels into the slug.
+      - key: PIP_NO_CACHE_DIR
+        value: "1"

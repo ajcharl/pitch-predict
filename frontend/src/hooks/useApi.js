@@ -16,6 +16,9 @@ function useAsync(fetcher, deps, { key, enabled = true } = {}) {
   const [loading, setLoading] = useState(enabled && !(key && cache.has(key)))
   const [error, setError] = useState(null)
   const [nonce, setNonce] = useState(0)
+  // Goes true when a request is taking long enough that the user deserves an
+  // explanation -- typically a sleeping free-tier backend waking up.
+  const [slow, setSlow] = useState(false)
 
   const retry = useCallback(() => setNonce((n) => n + 1), [])
 
@@ -33,6 +36,8 @@ function useAsync(fetcher, deps, { key, enabled = true } = {}) {
     let cancelled = false
     setLoading(true)
     setError(null)
+    setSlow(false)
+    const slowTimer = setTimeout(() => { if (!cancelled) setSlow(true) }, 4000)
     fetcher()
       .then((res) => {
         if (cancelled) return
@@ -46,15 +51,20 @@ function useAsync(fetcher, deps, { key, enabled = true } = {}) {
         }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        clearTimeout(slowTimer)
+        if (!cancelled) {
+          setLoading(false)
+          setSlow(false)
+        }
       })
     return () => {
       cancelled = true
+      clearTimeout(slowTimer)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, enabled, nonce])
 
-  return { data, loading, error, retry }
+  return { data, loading, error, retry, slow }
 }
 
 export function useHealth() {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Page } from '../App'
 import {
-  EmptyState, ErrorState, FormBadges, ProbCell, SkeletonTable, TrustBadge,
+  EmptyState, ErrorState, FormBadges, ProbCell, SkeletonTable, TrustBadge, WakingNotice,
 } from '../components/ui'
 import { useFixtureDates, useFixtures, useLeagues } from '../hooks/useApi'
 
@@ -26,7 +26,7 @@ export default function FixturesPage() {
   // Default to "all dates" so the page opens showing the whole upcoming slate.
   useEffect(() => { setDate(null) }, [league])
 
-  const { data, loading, error, retry } = useFixtures(date, league)
+  const { data, loading, error, retry, slow } = useFixtures(date, league)
   const fixtures = data?.fixtures || []
   const fresh = data?.data_freshness
   const dates = datesData?.dates || []
@@ -81,6 +81,7 @@ export default function FixturesPage() {
         </div>
       </div>
 
+      {loading && slow && <WakingNotice />}
       {loading && <SkeletonTable rows={10} />}
       {error && <ErrorState error={error} onRetry={retry} />}
       {!loading && !error && !fixtures.length && (

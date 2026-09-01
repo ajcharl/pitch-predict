@@ -39,19 +39,30 @@ model/data/live/
 !model/data/.gitkeep
 
 # =============================================================================
-# Trained artefacts — regenerate with `python model/train.py` (~50s)
+# Trained artefacts
 # =============================================================================
-# Deliberately not committed. These are binary blobs that change on every
-# retrain, so committing them would add ~19MB to git history *per retrain*,
-# permanently. They are fully reproducible from the data plus train.py.
+# These ARE committed, deliberately. Together they are only ~4.8MB, and they
+# are everything the API needs to serve:
 #
-#   model.pkl       the trained forest
-#   state.pkl       team state from training
-#   state_live.pkl  refreshed state, written by refresh.py
-#   metrics.json    evaluation results
-#   backtest.csv    per-match out-of-sample predictions (matched by *.csv above)
-model/*.pkl
-model/metrics.json
+#   model.pkl       the trained forest (3.6MB)
+#   state.pkl       team state from training - refresh.py rebuilds from this
+#   state_live.pkl  refreshed state, what the API actually reads
+#   metrics.json    evaluation results, for the Model Info page
+#   backtest.csv    out-of-sample predictions, for the Track record page
+#
+# Committing them means a deploy needs NO build step and NO 42MB dataset
+# download -- which is what makes the free tier viable. The 42MB Matches.csv
+# stays ignored because only train.py reads it.
+!model/model.pkl
+!model/state.pkl
+!model/state_live.pkl
+!model/metrics.json
+!model/data/backtest.csv
+# Of everything refresh.py downloads into live/, only fixtures.csv is read at
+# runtime. clubelo.csv and new_results.csv are intermediates -- keep them out.
+!model/data/live/
+model/data/live/*
+!model/data/live/fixtures.csv
 
 # =============================================================================
 # Editors / OS

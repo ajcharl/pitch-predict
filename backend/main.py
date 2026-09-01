@@ -7,6 +7,7 @@ ONCE during the startup lifespan and every request then shares the same
 in-memory Predictor.
 """
 
+import os
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -64,11 +65,31 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# The Vite dev server proxies /api, but allow direct browser calls too.
+# CORS. In development the Vite dev server proxies /api, so this only matters
+# for direct browser calls. In production it depends on how the frontend
+# reaches us:
+#
+#   * If Vercel rewrites /api/* to this service (the setup in
+#     frontend/vercel.json), the browser only ever sees the Vercel origin and
+#     CORS never comes into play -- nothing to configure.
+#   * If the frontend calls this service directly, set ALLOWED_ORIGINS to a
+#     comma-separated list of frontend URLs, e.g.
+#         ALLOWED_ORIGINS=https://matchiq.vercel.app,https://matchiq.com
+#
+# Never widen this to "*" while allow_credentials is on -- browsers reject that
+# combination, and it would let any site call the API with cookies attached.
+DEV_ORIGINS = [
+    "http://localhost:5173", "http://127.0.0.1:5173",
+    "http://localhost:4173", "http://127.0.0.1:4173",
+]
+_configured = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+ALLOWED_ORIGINS = _configured or DEV_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",
-                   "http://localhost:4173", "http://127.0.0.1:4173"],
+    allow_origins=ALLOWED_ORIGINS,
+    # Also allow Vercel preview deployments, which get a new subdomain per push.
+    allow_origin_regex=os.getenv("ALLOWED_ORIGIN_REGEX") or None,
     allow_credentials=True,
     allow_methods=["GET"],
     allow_headers=["*"],
@@ -133,6 +154,7 @@ def health():
         body["teams"] = len(p._index)
         body["trained_at"] = p.trained_at
         body["accuracy"] = p.metrics.get("accuracy")
+        body["data"] = p.freshness()
     else:
         body["message"] = _state["error"] or "model not loaded"
     return JSONResponse(status_code=200 if ok else 503, content=body)

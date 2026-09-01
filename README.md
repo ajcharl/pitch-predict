@@ -87,22 +87,29 @@ a comparison that would need many nested splits into one cheap one.
 
 ### Why a Random Forest
 
-400 decision trees, each trained on a random slice of the data and features, voting
+150 decision trees, each trained on a random slice of the data and features, voting
 together. It handles mixed scales with no normalisation, finds interactions on its own
 (*"home form matters more when the Elo gap is small"*), resists overfitting once you set a
 sensible minimum leaf size — and it gives both usable probabilities and a readable
 importance ranking, so the app can explain *why*. Deep learning would be overkill here:
 with 33 tabular features and 40k rows, a forest with good features wins.
 
+The forest is deliberately small — 150 trees with a minimum of 60 matches per leaf. A sweep
+over both parameters found this *more* accurate than the 400-tree, 25-leaf version it
+replaced (52.6% vs 52.2%, with a better log loss) while using 96k tree nodes instead of 616k.
+Bigger leaves generalise better on noisy data; the deeper forest was partly memorising. The
+side effect is that `model.pkl` is 3.6MB rather than 19MB, which is what lets the whole thing
+run on a free 512MB host.
+
 **What it actually leans on:**
 
 | Feature | Importance |
 |---|---|
-| `elo_diff` | 18.5% |
-| `home_elo` | 8.2% |
-| `goal_diff_diff` | 7.9% |
-| `away_elo` | 7.3% |
-| `position_diff` | 4.7% |
+| `elo_diff` | 23.8% |
+| `goal_diff_diff` | 10.7% |
+| `home_elo` | 9.1% |
+| `away_elo` | 7.2% |
+| `position_diff` | 5.4% |
 
 ---
 
@@ -115,28 +122,28 @@ the model train on April and be tested on January of the same season, and it wou
 better in testing than in life.
 
 ```
-Model accuracy:              52.2%
+Model accuracy:              52.6%
 Baseline (always home win):  42.6%
-Beats baseline by:           +9.6 percentage points
-Log loss:                    0.982  (a blind 1/3 guess scores 1.099)
+Beats baseline by:           +10.0 percentage points
+Log loss:                    0.981  (a blind 1/3 guess scores 1.099)
 ```
 
 **Per league** (test period):
 
 | League | Model | Baseline | Edge |
 |---|---|---|---|
-| La Liga | 54.1% | 44.2% | +9.9 |
-| Premier League | 53.8% | 43.4% | +10.4 |
-| Serie A | 52.1% | 40.8% | +11.3 |
-| Ligue 1 | 50.4% | 43.0% | +7.4 |
-| Bundesliga | 49.8% | 41.2% | +8.6 |
+| Premier League | 54.6% | 43.4% | +11.2 |
+| La Liga | 54.2% | 44.2% | +10.0 |
+| Serie A | 52.5% | 40.8% | +11.7 |
+| Ligue 1 | 50.6% | 43.0% | +7.5 |
+| Bundesliga | 50.0% | 41.2% | +8.8 |
 
-### Is 52% good? Yes.
+### Is 52.6% good? Yes.
 
 A blind three-way guess is 33%. Always backing the home team gets 42.6%. Commercial models
 with far richer data (injuries, lineups, xG, transfer news) top out around 52–56%. Football
 is **irreducibly unpredictable** — a deflection, a red card, or a keeper's one good day
-decides matches no model can foresee. The gap between 42.6% and 52.2% is the part that
+decides matches no model can foresee. The gap between 42.6% and 52.6% is the part that
 *is* predictable, and that's what MatchIQ captures.
 
 An earlier build also covered 11 second-tier and smaller leagues and scored 50.4% overall.
@@ -148,9 +155,9 @@ and they were dragging the average down.
 
 | Outcome | Recall | Precision |
 |---|---|---|
-| Home Win | 85.1% | 51.4% |
+| Home Win | 85.6% | 51.8% |
 | Draw | 0.0% | — |
-| Away Win | 50.4% | 54.2% |
+| Away Win | 50.8% | 54.4% |
 
 A draw is almost never the single *most likely* result — it typically sits at 25–28% while
 one side leads. So the model's headline pick is nearly always a win, even though the draw
@@ -269,6 +276,80 @@ in development.
 > `http://127.0.0.1:5173` won't connect. And keep the ports at 8000/5173 unless you change
 > them together: the Vite proxy targets `127.0.0.1:8000` and the backend's CORS allowlist
 > expects the UI on 5173.
+
+---
+
+## Deploying (Render + Vercel, free tiers)
+
+Both halves fit on free plans. The API is **Render** (`render.yaml`), the UI is **Vercel**
+(`frontend/vercel.json`).
+
+**Nothing needs building on the server.** `model.pkl`, `state_live.pkl`, `metrics.json`,
+`backtest.csv` and `fixtures.csv` are committed — 4.8MB in total — so Render only installs
+dependencies and starts. The 42MB `Matches.csv` stays out of the repo because only
+`train.py` reads it.
+
+### Backend on Render
+
+New → Blueprint → point at the repo. `render.yaml` sets everything:
+
+```
+buildCommand: pip install -r backend/requirements.txt
+startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1
+healthCheckPath: /api/health
+```
+
+Two details that matter:
+
+* **`--workers 1` is deliberate.** Each worker loads its own copy of the forest and team
+  state, so a second worker doubles memory for no benefit — the requests are short and
+  CPU-light.
+* **Measured footprint is ~200MB resident** (numpy 28, pandas 38, scikit-learn 77, web stack
+  14, model and working set 41) with a ~3s model load. That fits the 512MB free instance
+  with room to spare.
+
+### Frontend on Vercel
+
+Import the repo and set **Root Directory** to `frontend`. Vite is auto-detected;
+`vercel.json` does the rest:
+
+```json
+"rewrites": [
+  { "source": "/api/:path*", "destination": "https://matchiq-api.onrender.com/api/:path*" },
+  { "source": "/(.*)",       "destination": "/index.html" }
+]
+```
+
+**Edit that Render URL to your own** — it is the one value you must change.
+
+The first rewrite proxies the API through Vercel, so the browser only ever sees one origin
+and **CORS never applies**. The second is what stops `/match`, `/leagues` and
+`/team/Arsenal` from 404-ing on a hard refresh or a shared link — they are client-side
+routes, and without it every deep link breaks.
+
+If you would rather call Render directly instead of proxying, drop the first rewrite and set
+`ALLOWED_ORIGINS` on Render to your Vercel URL (`ALLOWED_ORIGIN_REGEX` covers preview
+deployments, which get a fresh subdomain per push).
+
+### Two things to expect on the free tier
+
+**Cold starts.** Render sleeps an idle instance after ~15 minutes; the next request waits for
+a container boot plus the 3s model load. The frontend handles this rather than looking
+broken: requests retry automatically on the gateway errors a waking service returns, and
+after 4 seconds the fixtures page explains that the server is spinning up.
+
+**The filesystem is ephemeral.** `refresh.py` writes `state_live.pkl` and `fixtures.csv`, and
+anything written on the server vanishes on the next deploy or restart. So refresh runs
+*locally* and the results get committed:
+
+```bash
+.venv/Scripts/python.exe model/refresh.py && git add -f model/state_live.pkl model/data/live/fixtures.csv model/data/backtest.csv && git commit -m "refresh fixtures"
+```
+
+Pushing that redeploys with current data. Because `state.pkl` is committed too, `refresh.py`
+works from a fresh clone without downloading the dataset at all. If you skip this, the app
+still runs — it falls back to the training snapshot and the freshness banner says so.
+
 
 ---
 

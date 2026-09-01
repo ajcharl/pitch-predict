@@ -1,0 +1,49 @@
+Division,MatchDate,MatchTime,HomeTeam,AwayTeam
+SP1,2026-08-28,18:00,Santander,Elche
+D1,2026-08-28,19:30,Bayern Munich,Stuttgart
+F1,2026-08-28,19:45,Lille,Paris SG
+I1,2026-08-28,19:45,Milan,Venezia
+E0,2026-08-28,20:00,Crystal Palace,Man City
+SP1,2026-08-28,20:30,Alaves,Villarreal
+E0,2026-08-29,12:30,Liverpool,Nottm Forest
+D1,2026-08-29,14:30,Elversberg,Leverkusen
+D1,2026-08-29,14:30,FC Koln,Hoffenheim
+D1,2026-08-29,14:30,Mainz,Paderborn
+D1,2026-08-29,14:30,RB Leipzig,MGladbach
+D1,2026-08-29,14:30,Union Berlin,Ein Frankfurt
+E0,2026-08-29,15:00,Bournemouth,Everton
+E0,2026-08-29,15:00,Coventry,Hull
+SP1,2026-08-29,16:00,Levante,Betis
+F1,2026-08-29,16:15,Strasbourg,Lens
+D1,2026-08-29,17:30,Dortmund,Hamburg
+E0,2026-08-29,17:30,Tottenham,Newcastle
+I1,2026-08-29,17:30,Fiorentina,Frosinone
+I1,2026-08-29,17:30,Monza,Udinese
+I1,2026-08-29,17:30,Sassuolo,Torino
+SP1,2026-08-29,18:00,Sociedad,Espanol
+F1,2026-08-29,19:45,Auxerre,Angers
+F1,2026-08-29,19:45,Brest,Toulouse
+F1,2026-08-29,19:45,Lorient,Troyes
+F1,2026-08-29,19:45,Lyon,Le Havre
+I1,2026-08-29,19:45,Juventus,Parma
+SP1,2026-08-29,20:30,Sevilla,Ath Madrid
+E0,2026-08-30,14:00,Chelsea,Brighton
+E0,2026-08-30,14:00,Leeds,Brentford
+E0,2026-08-30,14:00,Sunderland,Fulham
+F1,2026-08-30,14:00,Paris FC,Nice
+D1,2026-08-30,14:30,Freiburg,Werder Bremen
+SP1,2026-08-30,16:00,Real Madrid,Malaga
+F1,2026-08-30,16:15,Rennes,Le Mans
+D1,2026-08-30,16:30,Augsburg,Schalke 04
+E0,2026-08-30,16:30,Man United,Ipswich
+I1,2026-08-30,17:30,Napoli,Como
+SP1,2026-08-30,18:30,La Coruna,Valencia
+F1,2026-08-30,19:45,Monaco,Marseille
+I1,2026-08-30,19:45,Cagliari,Inter
+I1,2026-08-30,19:45,Lazio,Genoa
+SP1,2026-08-30,20:30,Celta,Ath Bilbao
+I1,2026-08-31,17:30,Lecce,Roma
+SP1,2026-08-31,18:30,Osasuna,Getafe
+I1,2026-08-31,19:45,Atalanta,Bologna
+E0,2026-08-31,20:00,Aston Villa,Arsenal
+SP1,2026-08-31,20:30,Barcelona,Vallecano
