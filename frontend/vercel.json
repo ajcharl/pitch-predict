@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://matchiq-api.onrender.com/api/:path*"
+      "destination": "https://matchiq-api-szff.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

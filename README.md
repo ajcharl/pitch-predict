@@ -305,8 +305,10 @@ Two details that matter:
   state, so a second worker doubles memory for no benefit — the requests are short and
   CPU-light.
 * **Measured footprint is ~200MB resident** (numpy 28, pandas 38, scikit-learn 77, web stack
-  14, model and working set 41) with a ~3s model load. That fits the 512MB free instance
-  with room to spare.
+  14, model and working set 41). That fits the 512MB free instance with room to spare.
+* **Observed on the live free instance:** model load takes ~17s (slower CPU than local),
+  a cold request ~52s end to end, and warm requests 120-220ms from Ottawa with the service
+  in Render's Ohio region.
 
 ### Frontend on Vercel
 
@@ -315,12 +317,13 @@ Import the repo and set **Root Directory** to `frontend`. Vite is auto-detected;
 
 ```json
 "rewrites": [
-  { "source": "/api/:path*", "destination": "https://matchiq-api.onrender.com/api/:path*" },
+  { "source": "/api/:path*", "destination": "https://matchiq-api-szff.onrender.com/api/:path*" },
   { "source": "/(.*)",       "destination": "/index.html" }
 ]
 ```
 
-**Edit that Render URL to your own** — it is the one value you must change.
+That Render URL is the deployed API. If you redeploy under a different service name,
+this is the one value to update.
 
 The first rewrite proxies the API through Vercel, so the browser only ever sees one origin
 and **CORS never applies**. The second is what stops `/match`, `/leagues` and
