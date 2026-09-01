@@ -13,7 +13,10 @@ services:
     name: matchiq-api
     runtime: python
     plan: free
-    region: frankfurt          # pick the region nearest your users
+    # Closest Render region to Ottawa. Render has no Canadian region; of what it
+    # offers (oregon, ohio, virginia, frankfurt, singapore), Ohio is nearest at
+    # ~700km, with Virginia a close second. Change this if your users move.
+    region: ohio
     branch: main
 
     buildCommand: pip install -r backend/requirements.txt
